@@ -9,22 +9,22 @@ from PyQt5.QtGui import QIcon
 def loop(self):
     while True:
         files = self.checkForValidFiles()
+        if self._printerSelected == NULL:
+                        self._printerSelected = win32print.GetDefaultPrinter()
         if len(files) > 0:
             time.sleep(3)
             files = self.checkForValidFiles()
             for f in files:
                 try:
-                    if self._printerSelected == NULL:
-                        self._printerSelected = win32print.GetDefaultPrinter()
                     win32api.ShellExecute(0,"print", os.path.join(self._hotPath,f), None,  ".",  0)
                     shutil.copy(os.path.join(self._hotPath,f),os.path.join(self._archivePath,f))
                     self.deleteFile(f)
                     self.updateGUI(True,f)
                 except Exception as e:
                     # print(e)
-                    self.updateGUI(False,f)
                     shutil.copy(os.path.join(self._hotPath,f),os.path.join(self._errorPath,f))
                     self.deleteFile(f)
+                    self.updateGUI(False,f)
 
 
 class Main(QMainWindow):
@@ -92,10 +92,10 @@ class Main(QMainWindow):
     def deleteFile(self,f):
         while f in os.listdir(self._hotPath):
             try:              
-                time.sleep(2)
+                time.sleep(3)
                 os.remove(os.path.join(self._hotPath,f))
             except Exception as e:
-                time.sleep(2)
+                time.sleep(3)
         return None
 
     def updateGUI(self,succ,f):

@@ -16,14 +16,13 @@ def loop(self):
                 try:
                     if self._printerSelected == NULL:
                         self._printerSelected = win32print.GetDefaultPrinter()
-                    self.ui.textBrowser.append(self.getActualTime()+" printing file "+ f +" on "+self._printerSelected[2])
                     win32api.ShellExecute(0,"print", os.path.join(self._hotPath,f), None,  ".",  0)
-                    self.ui.textBrowser.append(self.getActualTime()+" copy "+f+" to archive")
                     shutil.copy(os.path.join(self._hotPath,f),os.path.join(self._archivePath,f))
                     self.deleteFile(f)
-                    self.ui.textBrowser.append(self.getActualTime()+" file "+f+" printed")
+                    self.updateGUI(True,f)
                 except Exception as e:
-                    print(e)
+                    # print(e)
+                    self.updateGUI(False,f)
                     shutil.copy(os.path.join(self._hotPath,f),os.path.join(self._errorPath,f))
                     self.deleteFile(f)
 
@@ -49,6 +48,7 @@ class Main(QMainWindow):
         for item in self.printerlist():
             self.ui.comboBox.addItem(str(item[2]))
         
+        # self.loop()
         threading.Thread(target=loop, args=(self,)).start()
 
     def autosave(self):
@@ -75,6 +75,7 @@ class Main(QMainWindow):
         self.autosave()
     def printerlist(self):
         return win32print.EnumPrinters(2)  
+
     def checkForValidFiles(self):
         files = []
         filesInFolder = os.listdir(self._hotPath)
@@ -82,17 +83,23 @@ class Main(QMainWindow):
             if f[-3:] == "pdf":
                 files.append(f)
         return files
+
     def getActualTime(self):
         now = datetime.now()
         t = now.strftime("%d.%m.%Y, %H:%M:%S")
         return t
+
     def deleteFile(self,f):
         while f in os.listdir(self._hotPath):
             try:              
-                time.sleep(3)
-                self.ui.textBrowser.append(self.getActualTime()+" removing "+f+" from hot folder")
+                time.sleep(2)
                 os.remove(os.path.join(self._hotPath,f))
             except Exception as e:
-                self.ui.textBrowser.append(e)
-                time.sleep(5)
+                time.sleep(2)
         return None
+
+    def updateGUI(self,succ,f):
+        if succ == True:
+            self.ui.textBrowser.append(self.getActualTime()+" File "+f+" printed on " + self._printerSelected[2] + " and moved to archive")
+        if succ == False:
+            self.ui.textBrowser.append(self.getActualTime()+" File "+f+" faced an error when printing on " + self._printerSelected[2] + " and moved to error folder")
